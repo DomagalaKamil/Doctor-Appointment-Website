@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Appointment Booking</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Welcome to Doctor Appointment Booking</h1>
+    
+    <div id="authForms">
+        <h2>Login or Register</h2>
+        <div>
+            <button onclick="showLoginForm()">Login</button>
+            <button onclick="showRegistrationForm()">Register</button>
+        </div>
+
+        <form id="loginForm" style="display: none;">
+            <h2>Login</h2>
+            <label for="loginUsername">Username:</label>
+            <input type="text" id="loginUsername" name="username" required><br><br>
+            <label for="loginPassword">Password:</label>
+            <input type="password" id="loginPassword" name="password" required><br><br>
+            <button type="submit">Login</button>
+        </form>
+
+        <div id="registrationOptions" style="display: none;">
+            <h2>Register as:</h2>
+            <button onclick="showPatientRegistration()">Patient</button>
+            <button onclick="showDoctorRegistration()">Doctor</button>
+        </div>
+
+        <form id="patientRegistrationForm" style="display: none;">
+            <h2>Register as Patient</h2>
+            <label for="patUsername">Username:</label>
+            <input type="text" id="patUsername" name="username" required><br><br>
+            <label for="patPassword">Password:</label>
+            <input type="password" id="patPassword" name="password" required><br><br>
+            <label for="patName">Name:</label>
+            <input type="text" id="patName" name="name" required><br><br>
+            <label for="patSurname">Surname:</label>
+            <input type="text" id="patSurname" name="surname" required><br><br>
+            <label for="patDob">Date of Birth:</label>
+            <input type="date" id="patDob" name="dob" required><br><br>
+            <label for="patAddress">Address:</label>
+            <input type="text" id="patAddress" name="address" required><br><br>
+            <label for="patGender">Gender:</label>
+            <select id="patGender" name="gender" required>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+            </select><br><br>
+            <button type="submit">Register</button>
+        </form>
+
+        <form id="doctorRegistrationForm" style="display: none;">
+            <h2>Register as Doctor</h2>
+            <label for="docUsername">Username:</label>
+            <input type="text" id="docUsername" name="username" required><br><br>
+            <label for="docPassword">Password:</label>
+            <input type="password" id="docPassword" name="password" required><br><br>
+            <label for="docName">Name:</label>
+            <input type="text" id="docName" name="name" required><br><br>
+            <label for="docSurname">Surname:</label>
+            <input type="text" id="docSurname" name="surname" required><br><br>
+            <label for="docLicense">License Code:</label>
+            <input type="text" id="docLicense" name="license" required><br><br>
+            <label for="docSpecialist">Specialist In:</label>
+            <input type="text" id="docSpecialist" name="specialist" required><br><br>
+            <label for="docAddress">Clinic Address:</label>
+            <input type="text" id="docAddress" name="address" required><br><br>
+            <button type="submit">Register</button>
+        </form>
+    </div>
+
+    <div id="appointmentSection" style="display: none;">
+        <form id="appointmentForm">
+            <h2>Book an Appointment</h2>
+            <label for="doctor">Doctor:</label>
+            <select id="doctor" name="doctor" required>
+                <!-- Dynamically populate doctor options -->
+            </select><br><br>
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" required><br><br>
+            <label for="time">Time:</label>
+            <input type="time" id="time" name="time" required><br><br>
+            <button type="submit">Book Appointment</button>
+        </form>
+
+        <h2>Your Appointments</h2>
+        <table id="appointmentsTable">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
