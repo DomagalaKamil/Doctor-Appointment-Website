@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Appointment Booking</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .day-row {
+            display: flex;
+            justify-content: space-around;
+        }
+        .day-column {
+            flex: 1;
+            padding: 10px;
+        }
+        .time-slot {
+            padding: 5px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .time-slot.selected {
+            background-color: lightblue;
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome to Doctor Appointment Booking</h1>
@@ -70,6 +89,23 @@
             <input type="text" id="docSpecialist" name="specialist" required><br><br>
             <label for="docAddress">Clinic Address:</label>
             <input type="text" id="docAddress" name="address" required><br><br>
+            <label for="availability">Availability:</label>
+            <div id="availability">
+                <div class="availability-entry">
+                    <select name="day_of_week[]">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                    <input type="time" name="start_time[]">
+                    <input type="time" name="end_time[]">
+                </div>
+            </div>
+            <button type="button" onclick="addAvailabilityEntry()">Add another availability</button><br><br>
             <button type="submit">Register</button>
         </form>
     </div>
@@ -77,14 +113,19 @@
     <div id="appointmentSection" style="display: none;">
         <form id="appointmentForm">
             <h2>Book an Appointment</h2>
+            <label for="specialistFilter">Specialty:</label>
+            <select id="specialistFilter" name="specialist">
+                <option value="">Select Specialist</option>
+            </select><br><br>
             <label for="doctor">Doctor:</label>
             <select id="doctor" name="doctor" required>
                 <!-- Dynamically populate doctor options -->
             </select><br><br>
-            <label for="date">Date:</label>
-            <input type="date" id="date" name="date" required><br><br>
-            <label for="time">Time:</label>
-            <input type="time" id="time" name="time" required><br><br>
+            <div id="slotContainer" class="day-row">
+                <!-- Time slots will be dynamically generated here -->
+            </div>
+            <input type="hidden" id="selectedDate" name="date">
+            <input type="hidden" id="selectedTime" name="time">
             <button type="submit">Book Appointment</button>
         </form>
 
@@ -92,7 +133,7 @@
         <table id="appointmentsTable">
             <thead>
                 <tr>
-                    <th>Patient</th>
+                    <th>Doctor</th>
                     <th>Date</th>
                     <th>Time</th>
                 </tr>
