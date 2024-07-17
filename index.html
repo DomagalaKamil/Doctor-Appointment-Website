@@ -3,27 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Appointment Booking</title>
+    <title>Doctor Appointment Booking - Login/Register</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .day-row {
-            display: flex;
-            justify-content: space-around;
-        }
-        .day-column {
-            flex: 1;
-            padding: 10px;
-        }
-        .time-slot {
-            padding: 5px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            cursor: pointer;
-        }
-        .time-slot.selected {
-            background-color: lightblue;
-        }
-    </style>
 </head>
 <body>
     <h1>Welcome to Doctor Appointment Booking</h1>
@@ -110,39 +91,6 @@
         </form>
     </div>
 
-    <div id="appointmentSection" style="display: none;">
-        <form id="appointmentForm">
-            <h2>Book an Appointment</h2>
-            <label for="specialistFilter">Specialty:</label>
-            <select id="specialistFilter" name="specialist">
-                <option value="">Select Specialist</option>
-            </select><br><br>
-            <label for="doctor">Doctor:</label>
-            <select id="doctor" name="doctor" required>
-                <!-- Dynamically populate doctor options -->
-            </select><br><br>
-            <div id="slotContainer" class="day-row">
-                <!-- Time slots will be dynamically generated here -->
-            </div>
-            <input type="hidden" id="selectedDate" name="date">
-            <input type="hidden" id="selectedTime" name="time">
-            <button type="submit">Book Appointment</button>
-        </form>
-
-        <h2>Your Appointments</h2>
-        <table id="appointmentsTable">
-            <thead>
-                <tr>
-                    <th>Doctor</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
-    </div>
-
-    <script src="script.js"></script>
+    <script src="authorisation.js"></script>
 </body>
 </html>

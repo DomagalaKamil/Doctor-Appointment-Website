@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Past Bookings</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            display: flex;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 15px;
+            height: 100vh;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .sidebar a {
+            display: block;
+            padding: 10px;
+            color: #333;
+            text-decoration: none;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .sidebar a:hover {
+            background-color: #ddd;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div>
+            <a href="home.html">Home</a>
+            <a href="profile.html">Profile</a>
+            <a href="patient.html">Book Appointment</a>
+            <a href="bookedAppointments.html">Your Appointments</a>
+            <a href="pastBookings.html">Past Bookings</a>
+        </div>
+        <a href="index.html" onclick="logout()">Log Out</a>
+    </div>
+    <div class="content">
+        <h1>Past Bookings</h1>
+        <table id="pastBookingsTable">
+            <thead>
+                <tr>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const token = localStorage.getItem('token');
+
+            function loadPastBookings() {
+                fetch('http://localhost:3000/past-appointments', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(response => response.json())
+                .then(appointments => {
+                    const tbody = document.getElementById('pastBookingsTable').querySelector('tbody');
+                    tbody.innerHTML = '';
+                    appointments.forEach(appointment => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${appointment.doctor_name} ${appointment.doctor_surname}</td>
+                            <td>${appointment.date}</td>
+                            <td>${appointment.time}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            loadPastBookings();
+        });
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            localStorage.removeItem('userId');
+        }
+    </script>
+</body>
+</html>
