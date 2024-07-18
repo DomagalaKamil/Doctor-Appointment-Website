@@ -72,7 +72,7 @@ app.post('/login', (req, res) => {
 
     db.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
         if (err) {
-            console.error(err);
+            console.error('Login error:', err);
             return res.status(500).json({ message: 'Login failed' });
         }
         if (results.length === 0) {
@@ -86,7 +86,7 @@ app.post('/login', (req, res) => {
         }
 
         const token = jwt.sign({ userId: user.id, role: user.role }, secretKey);
-        res.json({ token, userId: user.id });
+        res.json({ token, role: user.role, userId: user.id });
     });
 });
 
@@ -133,38 +133,46 @@ app.get('/doctor-availability', (req, res) => {
 
 app.post('/appointments', (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
-    const decoded = jwt.verify(token, secretKey);
+    let decoded;
 
-    if (!decoded) {
+    try {
+        decoded = jwt.verify(token, secretKey);
+    } catch (err) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
     const { doctorId, date, time } = req.body;
-    const patientUserId = decoded.userId;
+    const userId = decoded.userId;
 
-    // Check if doctorId and patientUserId are valid
-    db.query('SELECT id FROM patients WHERE user_id = ?', [patientUserId], (err, patientResults) => {
-        if (err || patientResults.length === 0) {
-            console.error('Failed to fetch patient information:', err);
-            return res.status(500).json({ message: 'Failed to fetch patient information' });
+    const bookingDateTime = new Date(`${date}T${time}`);
+    const currentDateTime = new Date();
+
+    // Check if the booking date and time is in the future
+    if (bookingDateTime <= currentDateTime) {
+        return res.status(400).json({ message: 'Cannot book an appointment in the past' });
+    }
+
+    db.query('SELECT id FROM patients WHERE user_id = ?', [userId], (err, results) => {
+        if (err || results.length === 0) {
+            return res.status(500).json({ message: 'Failed to identify patient' });
         }
-        
-        const validPatientId = patientResults[0].id;
 
-        db.query('SELECT id FROM doctors WHERE id = ?', [doctorId], (err, doctorResults) => {
-            if (err || doctorResults.length === 0) {
-                console.error('Failed to fetch doctor information:', err);
-                return res.status(500).json({ message: 'Failed to fetch doctor information' });
+        const patientId = results[0].id;
+
+        db.query('SELECT * FROM appointments WHERE doctor_id = ? AND date = ? AND time = ?', [doctorId, date, time], (err, results) => {
+            if (err) {
+                return res.status(500).json({ message: 'Failed to check appointment availability' });
             }
 
-            const validDoctorId = doctorResults[0].id;
+            if (results.length > 0) {
+                return res.status(400).json({ message: 'Time slot already booked' });
+            }
 
-            db.query('INSERT INTO appointments (patient_id, doctor_id, date, time) VALUES (?, ?, ?, ?)', [validPatientId, validDoctorId, date, time], err => {
+            db.query('INSERT INTO appointments (patient_id, doctor_id, date, time) VALUES (?, ?, ?, ?)', [patientId, doctorId, date, time], (err, results) => {
                 if (err) {
-                    console.error('Failed to book appointment:', err);
                     return res.status(500).json({ message: 'Failed to book appointment' });
                 }
-                res.json({ message: 'Appointment booked successfully' });
+                res.status(200).json({ message: 'Appointment booked successfully' });
             });
         });
     });
@@ -172,32 +180,82 @@ app.post('/appointments', (req, res) => {
 
 app.get('/appointments', (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
-    const decoded = jwt.verify(token, secretKey);
+    let decoded;
 
-    if (!decoded) {
+    try {
+        decoded = jwt.verify(token, secretKey);
+    } catch (err) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const doctorId = req.query.doctorId;
+
+    db.query('SELECT date, time FROM appointments WHERE doctor_id = ?', [doctorId], (err, results) => {
+        if (err) {
+            console.error('Failed to fetch appointments for doctor:', err);
+            return res.status(500).json({ message: 'Failed to fetch appointments' });
+        }
+        console.log('Fetched appointments for doctor:', results); // Log the fetched appointment data
+        res.json(results);
+    });
+});
+
+app.get('/past-appointments', (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    let decoded;
+
+    try {
+        decoded = jwt.verify(token, secretKey);
+    } catch (err) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
     const userId = decoded.userId;
-    const role = decoded.role;
+    const currentDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    if (role === 'patient') {
-        db.query('SELECT doctors.name AS doctor_name, doctors.surname AS doctor_surname, appointments.date, appointments.time FROM appointments JOIN doctors ON appointments.doctor_id = doctors.id WHERE appointments.patient_id = (SELECT id FROM patients WHERE user_id = ?)', [userId], (err, results) => {
-            if (err) {
-                console.error('Failed to fetch appointments:', err);
-                return res.status(500).json({ message: 'Failed to fetch appointments' });
-            }
-            res.json(results);
-        });
-    } else if (role === 'doctor') {
-        db.query('SELECT patients.name AS patient_name, patients.surname AS patient_surname, appointments.date, appointments.time FROM appointments JOIN patients ON appointments.patient_id = patients.id WHERE appointments.doctor_id = (SELECT id FROM doctors WHERE user_id = ?)', [userId], (err, results) => {
-            if (err) {
-                console.error('Failed to fetch appointments:', err);
-                return res.status(500).json({ message: 'Failed to fetch appointments' });
-            }
-            res.json(results);
-        });
+    db.query(`
+        SELECT doctors.name AS doctor_name, doctors.surname AS doctor_surname, appointments.date, appointments.time 
+        FROM appointments 
+        JOIN doctors ON appointments.doctor_id = doctors.id 
+        WHERE appointments.patient_id = (SELECT id FROM patients WHERE user_id = ?) 
+        AND CONCAT(appointments.date, ' ', appointments.time) < ? 
+        ORDER BY appointments.date DESC, appointments.time DESC
+    `, [userId, currentDateTime], (err, results) => {
+        if (err) {
+            console.error('Failed to fetch past appointments:', err);
+            return res.status(500).json({ message: 'Failed to fetch past appointments' });
+        }
+        res.json(results);
+    });
+});
+
+app.get('/future-appointments', (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    let decoded;
+
+    try {
+        decoded = jwt.verify(token, secretKey);
+    } catch (err) {
+        return res.status(401).json({ message: 'Unauthorized' });
     }
+
+    const userId = decoded.userId;
+    const currentDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    db.query(`
+        SELECT doctors.name AS doctor_name, doctors.surname AS doctor_surname, appointments.date, appointments.time 
+        FROM appointments 
+        JOIN doctors ON appointments.doctor_id = doctors.id 
+        WHERE appointments.patient_id = (SELECT id FROM patients WHERE user_id = ?) 
+        AND CONCAT(appointments.date, ' ', appointments.time) >= ? 
+        ORDER BY appointments.date ASC, appointments.time ASC
+    `, [userId, currentDateTime], (err, results) => {
+        if (err) {
+            console.error('Failed to fetch future appointments:', err);
+            return res.status(500).json({ message: 'Failed to fetch future appointments' });
+        }
+        res.json(results);
+    });
 });
 
 app.listen(port, () => {

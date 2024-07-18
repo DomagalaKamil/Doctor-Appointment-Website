@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function() {
     const token = localStorage.getItem('token');
     const patientId = localStorage.getItem('userId');
+    let bookedAppointments = [];
 
     let currentStartDate = new Date();
     currentStartDate.setHours(0, 0, 0, 0);
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('doctor').addEventListener('change', function() {
         const doctorId = this.value;
         loadAvailableSlots(doctorId);
+        loadAppointments(doctorId); // Load appointments for the selected doctor
     });
 
     document.getElementById('prevWeek').addEventListener('click', function() {
@@ -81,67 +83,113 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(availabilityData => {
-            fetch(`http://localhost:3000/appointments?doctorId=${doctorId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(response => response.json())
-            .then(appointmentData => {
-                const slotContainer = document.getElementById('slotContainer');
-                slotContainer.innerHTML = '';
+            console.log('Fetched availability data:', availabilityData); // Debug statement
 
-                const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-                const slots = {};
+            const slotContainer = document.getElementById('slotContainer');
+            slotContainer.innerHTML = '';
 
-                weekDays.forEach((day, index) => {
-                    slots[day] = [];
-                    const dayAvailability = availabilityData.filter(slot => slot.day_of_week === day);
+            const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const slots = {};
 
-                    if (dayAvailability.length > 0) {
-                        const { start_time, end_time } = dayAvailability[0];
-                        let currentTime = new Date(`1970-01-01T${start_time}`);
-                        const endTime = new Date(`1970-01-01T${end_time}`);
+            weekDays.forEach((day, index) => {
+                slots[day] = [];
+                const dayAvailability = availabilityData.filter(slot => slot.day_of_week === day);
 
-                        while (currentTime < endTime) {
-                            const slotTime = currentTime.toTimeString().substring(0, 5);
-                            slots[day].push(slotTime);
-                            currentTime.setMinutes(currentTime.getMinutes() + 30);
-                        }
+                if (dayAvailability.length > 0) {
+                    const { start_time, end_time } = dayAvailability[0];
+                    let currentTime = new Date(`1970-01-01T${start_time}`);
+                    const endTime = new Date(`1970-01-01T${end_time}`);
+
+                    while (currentTime < endTime) {
+                        const slotTime = currentTime.toTimeString().substring(0, 5);
+                        slots[day].push(slotTime);
+                        currentTime.setMinutes(currentTime.getMinutes() + 30);
                     }
+                }
 
-                    const dayDate = new Date(currentStartDate);
-                    dayDate.setDate(currentStartDate.getDate() + index);
+                const dayDate = new Date(currentStartDate);
+                dayDate.setDate(currentStartDate.getDate() + index);
 
-                    const dayDiv = document.createElement('div');
-                    dayDiv.className = 'day-column';
-                    dayDiv.innerHTML = `<h3>${day} (${dayDate.toLocaleDateString()})</h3>`;
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day-column';
+                dayDiv.innerHTML = `<h3>${day} (${dayDate.toLocaleDateString()})</h3>`;
 
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
+                slots[day].forEach(time => {
+                    const slotDiv = document.createElement('div');
+                    slotDiv.className = 'time-slot';
 
-                    slots[day].forEach(time => {
-                        const slotDiv = document.createElement('div');
-                        slotDiv.className = 'time-slot';
+                    // Adjust the date for checking against appointment data
+                    const adjustedDate = new Date(dayDate);
+
+                    const formattedDate = formatDate(adjustedDate);
+
+                    console.log(`Checking slot: ${formattedDate} ${time}`); // Debug statement
+
+                    if (isPast(adjustedDate) || isBooked(formattedDate, time)) {
+                        slotDiv.classList.add('unavailable');
+                        slotDiv.style.pointerEvents = 'none';
+                        slotDiv.style.backgroundColor = '#d3d3d3';
+                        slotDiv.textContent = isBooked(formattedDate, time) ? `${time} - Booked` : time;
+                    } else {
                         slotDiv.textContent = time;
-
-                        const isPast = dayDate < today || (dayDate.getTime() === today.getTime() && new Date(`1970-01-01T${time}`) <= new Date());
-                        const isBooked = appointmentData.some(appointment => appointment.date === dayDate.toISOString().split('T')[0] && appointment.time === time);
-
-                        if (isPast || isBooked) {
-                            slotDiv.classList.add('unavailable');
-                            slotDiv.style.pointerEvents = 'none';
-                            slotDiv.style.backgroundColor = '#d3d3d3';
-                        } else {
-                            slotDiv.addEventListener('click', () => selectSlot(dayDate, time, slotDiv));
-                        }
-                        dayDiv.appendChild(slotDiv);
-                    });
-
-                    slotContainer.appendChild(dayDiv);
+                        slotDiv.addEventListener('click', () => selectSlot(adjustedDate, time, slotDiv));
+                    }
+                    dayDiv.appendChild(slotDiv);
                 });
-            })
-            .catch(error => console.error('Error fetching appointments:', error));
+
+                slotContainer.appendChild(dayDiv);
+            });
+
+            populateBookedAppointmentsTable(); // Populate the table with booked appointments
         })
         .catch(error => console.error('Error fetching availability:', error));
+    }
+
+    function loadAppointments(doctorId) {
+        fetch(`http://localhost:3000/appointments?doctorId=${doctorId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(response => response.json())
+        .then(appointments => {
+            bookedAppointments = appointments; // Store appointments in array
+            populateBookedAppointmentsTable(); // Populate the table with booked appointments
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function populateBookedAppointmentsTable() {
+        const tbody = document.getElementById('bookedAppointmentsTable').querySelector('tbody');
+        tbody.innerHTML = '';
+        bookedAppointments.forEach(appointment => {
+            const appointmentDate = new Date(appointment.date).toISOString().split('T')[0]; // Extract the date part
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${appointment.doctor_name} ${appointment.doctor_surname}</td>
+                <td>${appointmentDate}</td>
+                <td>${appointment.time.substring(0, 5)}</td> <!-- Extract hours and minutes only -->
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function isPast(date) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isPast = date < today;
+        console.log(`isPast: ${isPast} for date: ${date}`); // Debug statement
+        return isPast;
+    }
+
+    function isBooked(date, time) {
+        const booked = bookedAppointments.some(appointment => {
+            const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
+            const appointmentTime = appointment.time.substring(0, 5); // Extract hours and minutes only
+            const isBooked = appointmentDate === date && appointmentTime === time;
+            console.log(`Comparing: ${appointmentDate} === ${date} && ${appointmentTime} === ${time} => ${isBooked}`); // Debug statement
+            return isBooked;
+        });
+        console.log(`isBooked: ${booked} for date: ${date} and time: ${time}`); // Debug statement
+        return booked;
     }
 
     function selectSlot(date, time, slotDiv) {
@@ -152,9 +200,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
         slotDiv.classList.add('selected');
 
-        const formattedDate = date.toISOString().split('T')[0];
+        const formattedDate = formatDate(date);
         document.getElementById('selectedDate').value = formattedDate;
         document.getElementById('selectedTime').value = time;
+    }
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     document.getElementById('appointmentForm').addEventListener('submit', function(event) {
@@ -181,33 +236,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 alert(data.message);
             }
             loadAvailableSlots(doctorId);  // Reload the slots to reflect the new booking
-            loadAppointments();  // Reload the user's appointments
+            loadAppointments(doctorId);  // Reload the user's appointments
         })
         .catch(error => console.error('Error:', error));
     });
 
-    function loadAppointments() {
-        fetch('http://localhost:3000/appointments', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(response => response.json())
-        .then(appointments => {
-            const tbody = document.getElementById('appointmentsTable').querySelector('tbody');
-            tbody.innerHTML = '';
-            appointments.forEach(appointment => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${appointment.doctor_name} ${appointment.doctor_surname}</td>
-                    <td>${appointment.date}</td>
-                    <td>${appointment.time}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        })
-        .catch(error => console.error('Error:', error));
-    }
-
     loadSpecialists();
-    loadAppointments();
     updateCalendar();
 });
