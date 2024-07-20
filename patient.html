@@ -39,6 +39,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            display: none; /* Hide initially */
         }
         .day-row {
             display: flex;
@@ -60,6 +61,9 @@
         .time-slot.unavailable {
             background-color: #d3d3d3;
             pointer-events: none;
+        }
+        #descriptionField, #bookButton { /* Hide initially */
+            display: none;
         }
     </style>
 </head>
@@ -88,7 +92,7 @@
                 <select id="doctor" name="doctor" required>
                     <!-- Dynamically populate doctor options -->
                 </select><br><br>
-                <div class="calendar-nav">
+                <div class="calendar-nav" id="calendarNav">
                     <button type="button" id="prevWeek">← Previous Week</button>
                     <span id="currentWeek"></span>
                     <button type="button" id="nextWeek">Next Week →</button>
@@ -98,37 +102,15 @@
                 </div>
                 <input type="hidden" id="selectedDate" name="date">
                 <input type="hidden" id="selectedTime" name="time">
-                <button type="submit">Book Appointment</button>
-            </form>
 
-            <h2>Your Appointments</h2>
-            <table id="appointmentsTable">
-                <thead>
-                    <tr>
-                        <th>Doctor</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+                <div id="descriptionField">
+                    <label for="problemDescription">Describe your problem (max 250 characters):</label><br>
+                    <textarea id="problemDescription" name="problemDescription" maxlength="250" rows="4" cols="50" required></textarea><br><br>
+                </div>
+
+                <button type="submit" id="bookButton">Book Appointment</button>
+            </form>
         </div>
-    </div>
-    <div id="bookedAppointmentsSection">
-        <h2>Your Booked Appointments</h2>
-        <table id="bookedAppointmentsTable">
-            <thead>
-                <tr>
-                    <th>Doctor</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Booked appointments will be populated here -->
-            </tbody>
-        </table>
     </div>
     <script src="patient.js"></script>
     <script>

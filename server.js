@@ -138,10 +138,11 @@ app.post('/appointments', (req, res) => {
     try {
         decoded = jwt.verify(token, secretKey);
     } catch (err) {
+        console.error('JWT verification error:', err);
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const { doctorId, date, time } = req.body;
+    const { doctorId, date, time, problemDescription } = req.body;
     const userId = decoded.userId;
 
     const bookingDateTime = new Date(`${date}T${time}`);
@@ -154,6 +155,7 @@ app.post('/appointments', (req, res) => {
 
     db.query('SELECT id FROM patients WHERE user_id = ?', [userId], (err, results) => {
         if (err || results.length === 0) {
+            console.error('Failed to identify patient:', err);
             return res.status(500).json({ message: 'Failed to identify patient' });
         }
 
@@ -161,6 +163,7 @@ app.post('/appointments', (req, res) => {
 
         db.query('SELECT * FROM appointments WHERE doctor_id = ? AND date = ? AND time = ?', [doctorId, date, time], (err, results) => {
             if (err) {
+                console.error('Failed to check appointment availability:', err);
                 return res.status(500).json({ message: 'Failed to check appointment availability' });
             }
 
@@ -168,8 +171,14 @@ app.post('/appointments', (req, res) => {
                 return res.status(400).json({ message: 'Time slot already booked' });
             }
 
-            db.query('INSERT INTO appointments (patient_id, doctor_id, date, time) VALUES (?, ?, ?, ?)', [patientId, doctorId, date, time], (err, results) => {
+            // Adjust the date to store it correctly in the database
+            const adjustedDate = new Date(date);
+            adjustedDate.setDate(adjustedDate.getDate() + 1);
+            const formattedDate = adjustedDate.toISOString().split('T')[0];
+
+            db.query('INSERT INTO appointments (patient_id, doctor_id, date, time, problem_description) VALUES (?, ?, ?, ?, ?)', [patientId, doctorId, formattedDate, time, problemDescription], (err, results) => {
                 if (err) {
+                    console.error('Failed to book appointment:', err);
                     return res.status(500).json({ message: 'Failed to book appointment' });
                 }
                 res.status(200).json({ message: 'Appointment booked successfully' });
@@ -177,6 +186,9 @@ app.post('/appointments', (req, res) => {
         });
     });
 });
+
+
+
 
 app.get('/appointments', (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];

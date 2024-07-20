@@ -14,8 +14,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById('doctor').addEventListener('change', function() {
         const doctorId = this.value;
-        loadAvailableSlots(doctorId);
-        loadAppointments(doctorId); // Load appointments for the selected doctor
+        if (doctorId) {
+            document.getElementById('calendarNav').style.display = 'flex';
+            document.getElementById('descriptionField').style.display = 'block';
+            document.getElementById('bookButton').style.display = 'block';
+            loadAvailableSlots(doctorId);
+            loadAppointments(doctorId); // Load appointments for the selected doctor
+        } else {
+            document.getElementById('calendarNav').style.display = 'none';
+            document.getElementById('descriptionField').style.display = 'none';
+            document.getElementById('bookButton').style.display = 'none';
+        }
     });
 
     document.getElementById('prevWeek').addEventListener('click', function() {
@@ -73,6 +82,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 option.textContent = `${doctor.name} ${doctor.surname}`;
                 doctorSelect.appendChild(option);
             });
+
+            // Hide calendar navigation and description field until a doctor is selected
+            document.getElementById('calendarNav').style.display = 'none';
+            document.getElementById('descriptionField').style.display = 'none';
+            document.getElementById('bookButton').style.display = 'none';
         })
         .catch(error => console.error('Error:', error));
     }
@@ -139,8 +153,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 slotContainer.appendChild(dayDiv);
             });
-
-            populateBookedAppointmentsTable(); // Populate the table with booked appointments
         })
         .catch(error => console.error('Error fetching availability:', error));
     }
@@ -152,24 +164,8 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(response => response.json())
         .then(appointments => {
             bookedAppointments = appointments; // Store appointments in array
-            populateBookedAppointmentsTable(); // Populate the table with booked appointments
         })
         .catch(error => console.error('Error:', error));
-    }
-
-    function populateBookedAppointmentsTable() {
-        const tbody = document.getElementById('bookedAppointmentsTable').querySelector('tbody');
-        tbody.innerHTML = '';
-        bookedAppointments.forEach(appointment => {
-            const appointmentDate = new Date(appointment.date).toISOString().split('T')[0]; // Extract the date part
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${appointment.doctor_name} ${appointment.doctor_surname}</td>
-                <td>${appointmentDate}</td>
-                <td>${appointment.time.substring(0, 5)}</td> <!-- Extract hours and minutes only -->
-            `;
-            tbody.appendChild(tr);
-        });
     }
 
     function isPast(date) {
@@ -217,8 +213,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const doctorId = document.getElementById('doctor').value;
         const date = document.getElementById('selectedDate').value;
         const time = document.getElementById('selectedTime').value;
+        const problemDescription = document.getElementById('problemDescription').value;
 
-        const data = { doctorId, date, time };
+        const data = { doctorId, date, time, problemDescription };
 
         fetch('http://localhost:3000/appointments', {
             method: 'POST',
