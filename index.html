@@ -3,91 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Appointment Booking - Login/Register</title>
+    <title>Doctor Appointment Booking</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align items to the top */
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #authForms {
+            text-align: center;
+            width: 300px; /* Set a fixed width */
+            margin-top: 20px; /* Add some margin to the top */
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form {
+            display: none;
+            margin-top: 20px;
+        }
+        form.active {
+            display: block;
+        }
+        a {
+            color: blue;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .role-selection {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .role-selection button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .form-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .form-group label {
+            width: 40%;
+            text-align: right;
+            padding-right: 10px;
+        }
+        .form-group input, .form-group select {
+            width: 55%;
+        }
+        .availability-entry {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .availability-entry select, .availability-entry input {
+            width: 32%;
+        }
+        button[type="submit"] {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to Doctor Appointment Booking</h1>
-    
     <div id="authForms">
-        <h2>Login or Register</h2>
-        <div>
-            <button onclick="showLoginForm()">Login</button>
-            <button onclick="showRegistrationForm()">Register</button>
-        </div>
-
-        <form id="loginForm" style="display: none;">
+        <h1>Welcome to Doctor Appointment Booking</h1>
+        
+        <form id="loginForm" class="active">
             <h2>Login</h2>
-            <label for="loginUsername">Username:</label>
-            <input type="text" id="loginUsername" name="username" required><br><br>
-            <label for="loginPassword">Password:</label>
-            <input type="password" id="loginPassword" name="password" required><br><br>
-            <button type="submit">Login</button>
-        </form>
-
-        <div id="registrationOptions" style="display: none;">
-            <h2>Register as:</h2>
-            <button onclick="showPatientRegistration()">Patient</button>
-            <button onclick="showDoctorRegistration()">Doctor</button>
-        </div>
-
-        <form id="patientRegistrationForm" style="display: none;">
-            <h2>Register as Patient</h2>
-            <label for="patUsername">Username:</label>
-            <input type="text" id="patUsername" name="username" required><br><br>
-            <label for="patPassword">Password:</label>
-            <input type="password" id="patPassword" name="password" required><br><br>
-            <label for="patName">Name:</label>
-            <input type="text" id="patName" name="name" required><br><br>
-            <label for="patSurname">Surname:</label>
-            <input type="text" id="patSurname" name="surname" required><br><br>
-            <label for="patDob">Date of Birth:</label>
-            <input type="date" id="patDob" name="dob" required><br><br>
-            <label for="patAddress">Address:</label>
-            <input type="text" id="patAddress" name="address" required><br><br>
-            <label for="patGender">Gender:</label>
-            <select id="patGender" name="gender" required>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-            </select><br><br>
-            <button type="submit">Register</button>
-        </form>
-
-        <form id="doctorRegistrationForm" style="display: none;">
-            <h2>Register as Doctor</h2>
-            <label for="docUsername">Username:</label>
-            <input type="text" id="docUsername" name="username" required><br><br>
-            <label for="docPassword">Password:</label>
-            <input type="password" id="docPassword" name="password" required><br><br>
-            <label for="docName">Name:</label>
-            <input type="text" id="docName" name="name" required><br><br>
-            <label for="docSurname">Surname:</label>
-            <input type="text" id="docSurname" name="surname" required><br><br>
-            <label for="docLicense">License Code:</label>
-            <input type="text" id="docLicense" name="license" required><br><br>
-            <label for="docSpecialist">Specialist In:</label>
-            <input type="text" id="docSpecialist" name="specialist" required><br><br>
-            <label for="docAddress">Clinic Address:</label>
-            <input type="text" id="docAddress" name="address" required><br><br>
-            <label for="availability">Availability:</label>
-            <div id="availability">
-                <div class="availability-entry">
-                    <select name="day_of_week[]">
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                        <option value="Saturday">Saturday</option>
-                        <option value="Sunday">Sunday</option>
-                    </select>
-                    <input type="time" name="start_time[]">
-                    <input type="time" name="end_time[]">
-                </div>
+            <div class="form-group">
+                <label for="loginUsername">Username:</label>
+                <input type="text" id="loginUsername" name="username" required>
             </div>
-            <button type="button" onclick="addAvailabilityEntry()">Add another availability</button><br><br>
-            <button type="submit">Register</button>
+            <div class="form-group">
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" name="password" required>
+            </div>
+            <button type="submit">Login</button><br><br>
+            <a id="toggleFormLink" onclick="showRegistrationForm()">Don't have an account? Register with us</a>
+        </form>
+
+        <form id="registrationForm">
+            <h2>Register</h2>
+            <div class="role-selection">
+                <button type="button" id="selectPatient">Patient</button>
+                <button type="button" id="selectDoctor">Doctor</button>
+            </div>
+            <input type="hidden" id="regRole" name="role">
+            <div class="form-group">
+                <label for="regUsername">Username:</label>
+                <input type="text" id="regUsername" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Password:</label>
+                <input type="password" id="regPassword" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="regName">Name:</label>
+                <input type="text" id="regName" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="regSurname">Surname:</label>
+                <input type="text" id="regSurname" name="surname" required>
+            </div>
+            <div class="form-group">
+                <label for="regDob">Date of Birth:</label>
+                <input type="date" id="regDob" name="dob" required>
+            </div>
+            <div class="form-group">
+                <label for="regAddress">Address:</label>
+                <input type="text" id="regAddress" name="address" required>
+            </div>
+            <div class="form-group">
+                <label for="regGender">Gender:</label>
+                <select id="regGender" name="gender" required>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div id="doctorFields" style="display: none;">
+                <div class="form-group">
+                    <label for="regLicense">License Code:</label>
+                    <input type="text" id="regLicense" name="license">
+                </div>
+                <div class="form-group">
+                    <label for="regSpecialist">Specialist In:</label>
+                    <input type="text" id="regSpecialist" name="specialist">
+                </div>
+                <div id="availability"></div>
+                <button type="button" onclick="addAvailabilityEntry()">Add Availability</button><br><br>
+            </div>
+            <button type="submit">Register</button><br><br>
+            <a id="toggleFormLink" onclick="showLoginForm()">Already have an account? Login here</a>
         </form>
     </div>
 
