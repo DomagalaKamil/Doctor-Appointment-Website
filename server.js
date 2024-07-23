@@ -25,7 +25,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 app.post('/register', (req, res) => {
-    const { username, password, role, name, surname, dob, address, gender, license, specialist, availability } = req.body;
+    const { username, password, email, role, name, surname, dob, gender, clinic_name, office_number, street, building_number, city, postcode, country, license, specialist, availability } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
 
     db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hashedPassword, role], (err, result) => {
@@ -37,7 +37,8 @@ app.post('/register', (req, res) => {
         const userId = result.insertId;
 
         if (role === 'patient') {
-            db.query('INSERT INTO patients (user_id, name, surname, dob, address, gender) VALUES (?, ?, ?, ?, ?, ?)', [userId, name, surname, dob, address, gender], err => {
+            db.query('INSERT INTO patients (user_id, name, surname, email, dob, gender, street, building_number, city, postcode, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+            [userId, name, surname, email, dob, gender, street, building_number, city, postcode, country], err => {
                 if (err) {
                     console.error(err);
                     return res.status(500).json({ message: 'Patient registration failed' });
@@ -45,7 +46,8 @@ app.post('/register', (req, res) => {
                 res.json({ message: 'Patient registered successfully' });
             });
         } else if (role === 'doctor') {
-            db.query('INSERT INTO doctors (user_id, name, surname, license_code, specialist, clinic_address) VALUES (?, ?, ?, ?, ?, ?)', [userId, name, surname, license, specialist, address], (err, result) => {
+            db.query('INSERT INTO doctors (user_id, name, surname, email, license_code, specialist, clinic_name, office_number, street, building_number, city, postcode, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+            [userId, name, surname, email, license, specialist, clinic_name, office_number, street, building_number, city, postcode, country], (err, result) => {
                 if (err) {
                     console.error(err);
                     return res.status(500).json({ message: 'Doctor registration failed' });
@@ -138,7 +140,6 @@ app.post('/appointments', (req, res) => {
     try {
         decoded = jwt.verify(token, secretKey);
     } catch (err) {
-        console.error('JWT verification error:', err);
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -171,12 +172,7 @@ app.post('/appointments', (req, res) => {
                 return res.status(400).json({ message: 'Time slot already booked' });
             }
 
-            // Adjust the date to store it correctly in the database
-            const adjustedDate = new Date(date);
-            adjustedDate.setDate(adjustedDate.getDate() + 1);
-            const formattedDate = adjustedDate.toISOString().split('T')[0];
-
-            db.query('INSERT INTO appointments (patient_id, doctor_id, date, time, problem_description) VALUES (?, ?, ?, ?, ?)', [patientId, doctorId, formattedDate, time, problemDescription], (err, results) => {
+            db.query('INSERT INTO appointments (patient_id, doctor_id, date, time, problem_description) VALUES (?, ?, ?, ?, ?)', [patientId, doctorId, date, time, problemDescription], (err, results) => {
                 if (err) {
                     console.error('Failed to book appointment:', err);
                     return res.status(500).json({ message: 'Failed to book appointment' });
@@ -186,31 +182,33 @@ app.post('/appointments', (req, res) => {
         });
     });
 });
-
-
-
-
+// Example of querying appointments and formatting date
 app.get('/appointments', (req, res) => {
-    const token = req.headers['authorization'].split(' ')[1];
-    let decoded;
-
-    try {
-        decoded = jwt.verify(token, secretKey);
-    } catch (err) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-
     const doctorId = req.query.doctorId;
 
-    db.query('SELECT date, time FROM appointments WHERE doctor_id = ?', [doctorId], (err, results) => {
-        if (err) {
-            console.error('Failed to fetch appointments for doctor:', err);
-            return res.status(500).json({ message: 'Failed to fetch appointments' });
+    const query = `
+        SELECT 
+            patient_id, 
+            doctor_id, 
+            DATE_FORMAT(date, '%Y-%m-%d') as date, 
+            time, 
+            problem_description 
+        FROM 
+            appointments 
+        WHERE 
+            doctor_id = ?;
+    `;
+
+    db.query(query, [doctorId], (error, results) => {
+        if (error) {
+            console.error('Error fetching appointments:', error);
+            res.status(500).send('Server error');
+            return;
         }
-        console.log('Fetched appointments for doctor:', results); // Log the fetched appointment data
         res.json(results);
     });
 });
+
 
 app.get('/past-appointments', (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];

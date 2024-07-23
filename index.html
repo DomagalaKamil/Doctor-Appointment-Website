@@ -95,15 +95,7 @@
                 <button type="button" id="selectPatient">Patient</button>
                 <button type="button" id="selectDoctor">Doctor</button>
             </div>
-            <input type="hidden" id="regRole" name="role">
-            <div class="form-group">
-                <label for="regUsername">Username:</label>
-                <input type="text" id="regUsername" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="regPassword">Password:</label>
-                <input type="password" id="regPassword" name="password" required>
-            </div>
+            <input type="hidden" id="regRole" name="role" value="patient">
             <div class="form-group">
                 <label for="regName">Name:</label>
                 <input type="text" id="regName" name="name" required>
@@ -113,12 +105,24 @@
                 <input type="text" id="regSurname" name="surname" required>
             </div>
             <div class="form-group">
-                <label for="regDob">Date of Birth:</label>
-                <input type="date" id="regDob" name="dob" required>
+                <label for="regUsername">Username:</label>
+                <input type="text" id="regUsername" name="username" required>
             </div>
             <div class="form-group">
-                <label for="regAddress">Address:</label>
-                <input type="text" id="regAddress" name="address" required>
+                <label for="regEmail">Email:</label>
+                <input type="email" id="regEmail" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Password:</label>
+                <input type="password" id="regPassword" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="regConfirmPassword">Confirm Password:</label>
+                <input type="password" id="regConfirmPassword" name="confirm_password" required>
+            </div>
+            <div class="form-group">
+                <label for="regDob">Date of Birth:</label>
+                <input type="date" id="regDob" name="dob" required>
             </div>
             <div class="form-group">
                 <label for="regGender">Gender:</label>
@@ -128,7 +132,57 @@
                     <option value="other">Other</option>
                 </select>
             </div>
+            <div id="patientFields">
+                <div class="form-group">
+                    <label for="regStreet">Street:</label>
+                    <input type="text" id="regStreet" name="street">
+                </div>
+                <div class="form-group">
+                    <label for="regBuildingNumber">Building Number:</label>
+                    <input type="text" id="regBuildingNumber" name="building_number">
+                </div>
+                <div class="form-group">
+                    <label for="regCity">City:</label>
+                    <input type="text" id="regCity" name="city">
+                </div>
+                <div class="form-group">
+                    <label for="regPostcode">Postcode:</label>
+                    <input type="text" id="regPostcode" name="postcode">
+                </div>
+                <div class="form-group">
+                    <label for="regCountry">Country:</label>
+                    <input type="text" id="regCountry" name="country">
+                </div>
+            </div>
             <div id="doctorFields" style="display: none;">
+                <div class="form-group">
+                    <label for="regClinicName">Clinic Name:</label>
+                    <input type="text" id="regClinicName" name="clinic_name">
+                </div>
+                <div class="form-group">
+                    <label for="regOfficeNumber">Office Number:</label>
+                    <input type="text" id="regOfficeNumber" name="office_number">
+                </div>
+                <div class="form-group">
+                    <label for="regStreetDoctor">Street:</label>
+                    <input type="text" id="regStreetDoctor" name="street">
+                </div>
+                <div class="form-group">
+                    <label for="regBuildingNumberDoctor">Building Number:</label>
+                    <input type="text" id="regBuildingNumberDoctor" name="building_number">
+                </div>
+                <div class="form-group">
+                    <label for="regCityDoctor">City:</label>
+                    <input type="text" id="regCityDoctor" name="city">
+                </div>
+                <div class="form-group">
+                    <label for="regPostcodeDoctor">Postcode:</label>
+                    <input type="text" id="regPostcodeDoctor" name="postcode">
+                </div>
+                <div class="form-group">
+                    <label for="regCountryDoctor">Country:</label>
+                    <input type="text" id="regCountryDoctor" name="country">
+                </div>
                 <div class="form-group">
                     <label for="regLicense">License Code:</label>
                     <input type="text" id="regLicense" name="license">

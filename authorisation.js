@@ -35,10 +35,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function selectRole(role) {
         document.getElementById('regRole').value = role;
+        const patientFields = document.getElementById('patientFields');
         const doctorFields = document.getElementById('doctorFields');
         if (role === 'doctor') {
+            patientFields.style.display = 'none';
             doctorFields.style.display = 'block';
         } else {
+            patientFields.style.display = 'block';
             doctorFields.style.display = 'none';
         }
     }
@@ -56,6 +59,16 @@ document.addEventListener("DOMContentLoaded", function() {
         const form = event.target;
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
+
+        if (data.password !== data.confirm_password) {
+            alert('Passwords do not match');
+            return;
+        }
+
+        if (!data.role) {
+            alert('Please select a role.');
+            return;
+        }
 
         if (data.role === 'doctor') {
             const availabilityEntries = document.querySelectorAll('.availability-entry');
@@ -115,5 +128,7 @@ document.addEventListener("DOMContentLoaded", function() {
     window.showLoginForm = showLoginForm;
     window.showRegistrationForm = showRegistrationForm;
 
+    // Initialize with patient role selected
+    document.getElementById('regRole').value = 'patient';
     showLoginForm();
 });
