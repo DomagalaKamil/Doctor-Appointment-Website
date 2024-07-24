@@ -23,51 +23,65 @@ db.connect(err => {
 
 app.use(cors());
 app.use(bodyParser.json());
-
 app.post('/register', (req, res) => {
-    const { username, password, email, role, name, surname, dob, gender, clinic_name, office_number, street, building_number, city, postcode, country, license, specialist, availability } = req.body;
+    const { 
+        username, password, email, role, 
+        name, surname, dob, gender, 
+        clinic_name, office_number, 
+        street, building_number, city, postcode, country, 
+        license, specialist, availability 
+    } = req.body;
+
     const hashedPassword = bcrypt.hashSync(password, 10);
 
-    db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hashedPassword, role], (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'User registration failed' });
-        }
+    db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', 
+        [username, hashedPassword, role], 
+        (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ message: 'User registration failed' });
+            }
 
-        const userId = result.insertId;
+            const userId = result.insertId;
 
-        if (role === 'patient') {
-            db.query('INSERT INTO patients (user_id, name, surname, email, dob, gender, street, building_number, city, postcode, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-            [userId, name, surname, email, dob, gender, street, building_number, city, postcode, country], err => {
-                if (err) {
-                    console.error(err);
-                    return res.status(500).json({ message: 'Patient registration failed' });
-                }
-                res.json({ message: 'Patient registered successfully' });
-            });
-        } else if (role === 'doctor') {
-            db.query('INSERT INTO doctors (user_id, name, surname, email, license_code, specialist, clinic_name, office_number, street, building_number, city, postcode, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-            [userId, name, surname, email, license, specialist, clinic_name, office_number, street, building_number, city, postcode, country], (err, result) => {
-                if (err) {
-                    console.error(err);
-                    return res.status(500).json({ message: 'Doctor registration failed' });
-                }
+            if (role === 'patient') {
+                db.query('INSERT INTO patients (user_id, name, surname, email, dob, gender, street, building_number, city, postcode, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+                    [userId, name, surname, email, dob, gender, street, building_number, city, postcode, country], 
+                    err => {
+                        if (err) {
+                            console.error(err);
+                            return res.status(500).json({ message: 'Patient registration failed' });
+                        }
+                        res.json({ message: 'Patient registered successfully' });
+                    });
+            } else if (role === 'doctor') {
+                db.query('INSERT INTO doctors (user_id, name, surname, email, license_code, specialist, clinic_name, office_number, street, building_number, city, postcode, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+                    [userId, name, surname, email, license, specialist, clinic_name, office_number, street, building_number, city, postcode, country], 
+                    (err, result) => {
+                        if (err) {
+                            console.error(err);
+                            return res.status(500).json({ message: 'Doctor registration failed' });
+                        }
 
-                const doctorId = result.insertId;
+                        const doctorId = result.insertId;
 
-                const availabilityEntries = availability.map(entry => [doctorId, entry.day_of_week, entry.start_time, entry.end_time]);
+                        const availabilityEntries = availability.map(entry => [doctorId, entry.day_of_week, entry.start_time, entry.end_time]);
 
-                db.query('INSERT INTO doctor_availability (doctor_id, day_of_week, start_time, end_time) VALUES ?', [availabilityEntries], err => {
-                    if (err) {
-                        console.error(err);
-                        return res.status(500).json({ message: 'Doctor availability registration failed' });
-                    }
-                    res.json({ message: 'Doctor registered successfully' });
-                });
-            });
-        }
-    });
+                        db.query('INSERT INTO doctor_availability (doctor_id, day_of_week, start_time, end_time) VALUES ?', 
+                            [availabilityEntries], 
+                            err => {
+                                if (err) {
+                                    console.error(err);
+                                    return res.status(500).json({ message: 'Doctor availability registration failed' });
+                                }
+                                res.json({ message: 'Doctor registered successfully' });
+                            });
+                    });
+            }
+        });
 });
+
+
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
@@ -268,6 +282,106 @@ app.get('/future-appointments', (req, res) => {
     });
 });
 
+app.get('/user/:id', (req, res) => {
+    const userId = req.params.id;
+
+    const query = `
+        SELECT p.name, p.surname, p.email, p.dob, 
+               p.street, p.building_number, 
+               p.city, p.postcode, p.country
+        FROM patients p
+        WHERE p.user_id = ?;
+    `;
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json(results[0]);
+    });
+});
+
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
+});
+
+
+// Update Email
+app.post('/update-email/:id', (req, res) => {
+    const userId = req.params.id;
+    const { currentPassword, newEmail } = req.body;
+
+    db.query('SELECT password FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+
+        if (results.length === 0 || !bcrypt.compareSync(currentPassword, results[0].password)) {
+            return res.status(401).json({ error: 'Invalid current password' });
+        }
+
+        db.query('UPDATE patients SET email = ? WHERE user_id = ?', [newEmail, userId], (err) => {
+            if (err) {
+                console.error('Database update error:', err);
+                return res.status(500).json({ error: 'Database update error' });
+            }
+            res.json({ message: 'Email updated successfully' });
+        });
+    });
+});
+
+// Update Password
+app.post('/update-password/:id', (req, res) => {
+    const userId = req.params.id;
+    const { currentPassword, newPassword } = req.body;
+
+    db.query('SELECT password FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+
+        if (results.length === 0 || !bcrypt.compareSync(currentPassword, results[0].password)) {
+            return res.status(401).json({ error: 'Invalid current password' });
+        }
+
+        const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
+        db.query('UPDATE users SET password = ? WHERE id = ?', [hashedNewPassword, userId], (err) => {
+            if (err) {
+                console.error('Database update error:', err);
+                return res.status(500).json({ error: 'Database update error' });
+            }
+            res.json({ message: 'Password updated successfully' });
+        });
+    });
+});
+
+// Update Address
+app.post('/update-address/:id', (req, res) => {
+    const userId = req.params.id;
+    const { currentPassword, street, building_number, city, postcode, country } = req.body;
+
+    db.query('SELECT password FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+
+        if (results.length === 0 || !bcrypt.compareSync(currentPassword, results[0].password)) {
+            return res.status(401).json({ error: 'Invalid current password' });
+        }
+
+        db.query('UPDATE patients SET street = ?, building_number = ?, city = ?, postcode = ?, country = ? WHERE user_id = ?', 
+        [street, building_number, city, postcode, country, userId], (err) => {
+            if (err) {
+                console.error('Database update error:', err);
+                return res.status(500).json({ error: 'Database update error' });
+            }
+            res.json({ message: 'Address updated successfully' });
+        });
+    });
 });

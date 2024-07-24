@@ -1,85 +1,38 @@
 document.addEventListener("DOMContentLoaded", function() {
     function showLoginForm() {
         document.getElementById('loginForm').classList.add('active');
-        document.getElementById('registrationForm').classList.remove('active');
-        document.getElementById('toggleFormLink').textContent = "Don't have an account? Register with us";
-        document.getElementById('toggleFormLink').onclick = showRegistrationForm;
+        document.getElementById('registrationOptions').style.display = 'none';
+        document.getElementById('patientRegistrationForm').classList.remove('active');
+        document.getElementById('doctorRegistrationForm').classList.remove('active');
     }
 
     function showRegistrationForm() {
         document.getElementById('loginForm').classList.remove('active');
-        document.getElementById('registrationForm').classList.add('active');
-        document.getElementById('toggleFormLink').textContent = "Already have an account? Login here";
-        document.getElementById('toggleFormLink').onclick = showLoginForm;
+        document.getElementById('registrationOptions').style.display = 'block';
+        document.getElementById('patientRegistrationForm').classList.remove('active');
+        document.getElementById('doctorRegistrationForm').classList.remove('active');
     }
 
-    function addAvailabilityEntry() {
-        const availabilityDiv = document.getElementById('availability');
-        const newEntry = document.createElement('div');
-        newEntry.className = 'availability-entry';
-        newEntry.innerHTML = `
-            <select name="day_of_week[]">
-                <option value="Monday">Monday</option>
-                <option value="Tuesday">Tuesday</option>
-                <option value="Wednesday">Wednesday</option>
-                <option value="Thursday">Thursday</option>
-                <option value="Friday">Friday</option>
-                <option value="Saturday">Saturday</option>
-                <option value="Sunday">Sunday</option>
-            </select>
-            <input type="time" name="start_time[]">
-            <input type="time" name="end_time[]">
-        `;
-        availabilityDiv.appendChild(newEntry);
+    function showPatientRegistration() {
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('registrationOptions').style.display = 'none';
+        document.getElementById('patientRegistrationForm').classList.add('active');
+        document.getElementById('doctorRegistrationForm').classList.remove('active');
     }
 
-    function selectRole(role) {
-        document.getElementById('regRole').value = role;
-        const patientFields = document.getElementById('patientFields');
-        const doctorFields = document.getElementById('doctorFields');
-        if (role === 'doctor') {
-            patientFields.style.display = 'none';
-            doctorFields.style.display = 'block';
-        } else {
-            patientFields.style.display = 'block';
-            doctorFields.style.display = 'none';
-        }
+    function showDoctorRegistration() {
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('registrationOptions').style.display = 'none';
+        document.getElementById('patientRegistrationForm').classList.remove('active');
+        document.getElementById('doctorRegistrationForm').classList.add('active');
     }
 
-    document.getElementById('selectPatient').addEventListener('click', function() {
-        selectRole('patient');
-    });
-
-    document.getElementById('selectDoctor').addEventListener('click', function() {
-        selectRole('doctor');
-    });
-
-    document.getElementById('registrationForm').addEventListener('submit', function(event) {
+    document.getElementById('patientRegistrationForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-
-        if (data.password !== data.confirm_password) {
-            alert('Passwords do not match');
-            return;
-        }
-
-        if (!data.role) {
-            alert('Please select a role.');
-            return;
-        }
-
-        if (data.role === 'doctor') {
-            const availabilityEntries = document.querySelectorAll('.availability-entry');
-            data.availability = Array.from(availabilityEntries).map(entry => {
-                return {
-                    day_of_week: entry.querySelector('[name="day_of_week[]"]').value,
-                    start_time: entry.querySelector('[name="start_time[]"]').value,
-                    end_time: entry.querySelector('[name="end_time[]"]').value
-                };
-            });
-        }
+        data.role = 'patient';
 
         fetch('http://localhost:3000/register', {
             method: 'POST',
@@ -87,12 +40,33 @@ document.addEventListener("DOMContentLoaded", function() {
             body: JSON.stringify(data)
         })
         .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-            if (data.success) {
-                showLoginForm();
-            }
+        .then(data => alert(data.message))
+        .catch(error => console.error('Error:', error));
+    });
+
+    document.getElementById('doctorRegistrationForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        data.role = 'doctor';
+
+        const availabilityEntries = document.querySelectorAll('.availability-entry');
+        data.availability = Array.from(availabilityEntries).map(entry => {
+            return {
+                day_of_week: entry.querySelector('[name="day_of_week[]"]').value,
+                start_time: entry.querySelector('[name="start_time[]"]').value,
+                end_time: entry.querySelector('[name="end_time[]"]').value
+            };
+        });
+
+        fetch('http://localhost:3000/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         })
+        .then(response => response.json())
+        .then(data => alert(data.message))
         .catch(error => console.error('Error:', error));
     });
 
@@ -118,17 +92,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 window.location.href = 'home.html';
             } else {
-                alert('Login failed: ' + data.message);
+                alert('Login failed');
             }
         })
         .catch(error => console.error('Error:', error));
     });
 
-    window.addAvailabilityEntry = addAvailabilityEntry;
     window.showLoginForm = showLoginForm;
     window.showRegistrationForm = showRegistrationForm;
+    window.showPatientRegistration = showPatientRegistration;
+    window.showDoctorRegistration = showDoctorRegistration;
 
-    // Initialize with patient role selected
-    document.getElementById('regRole').value = 'patient';
     showLoginForm();
 });

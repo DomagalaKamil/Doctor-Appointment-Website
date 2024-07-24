@@ -8,6 +8,7 @@
     <style>
         body {
             display: flex;
+            font-family: Arial, sans-serif;
         }
         .sidebar {
             width: 200px;
@@ -33,6 +34,91 @@
         .content {
             flex: 1;
             padding: 20px;
+            position: relative;
+        }
+        .profile-box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            position: relative;
+            margin-top: 20px;
+        }
+        .profile-box .settings-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .profile-info {
+            margin-bottom: 20px;
+        }
+        .profile-info h2 {
+            margin-bottom: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            max-width: 90%;
+            overflow-y: auto;
+            max-height: 90%;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            margin: 0;
+        }
+        .close {
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        .settings-section h3 {
+            margin-bottom: 10px;
+        }
+        .settings-section label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .settings-section input {
+            width: calc(100% - 10px);
+            padding: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .settings-section button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
         }
     </style>
 </head>
@@ -48,14 +134,76 @@
         <a href="index.html" onclick="logout()">Log Out</a>
     </div>
     <div class="content">
-        <h1>Patient Profile</h1>
-        <!-- Add profile details here -->
+        <div class="profile-box">
+            <button class="settings-button" onclick="openModal()">Settings</button>
+            <h1>Patient Profile</h1>
+            <div id="profileInfo" class="profile-info">
+                <!-- Profile details will be injected here -->
+            </div>
+        </div>
     </div>
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="settings-section">
+                <form id="updateEmailForm">
+                    <h3>Update Email</h3>
+                    <label for="currentPasswordEmail">Current Password:</label>
+                    <input type="password" id="currentPasswordEmail" name="currentPasswordEmail" required>
+                    <label for="newEmail">New Email:</label>
+                    <input type="email" id="newEmail" name="newEmail" required>
+                    <button type="submit">Update Email</button>
+                </form>
+            </div>
+            <div class="settings-section">
+                <form id="updatePasswordForm">
+                    <h3>Update Password</h3>
+                    <label for="currentPassword">Current Password:</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+                    <label for="newPassword">New Password:</label>
+                    <input type="password" id="newPassword" name="newPassword" required>
+                    <label for="confirmNewPassword">Confirm New Password:</label>
+                    <input type="password" id="confirmNewPassword" name="confirmNewPassword" required>
+                    <button type="submit">Update Password</button>
+                </form>
+            </div>
+            <div class="settings-section">
+                <form id="updateAddressForm">
+                    <h3>Update Address</h3>
+                    <label for="currentPasswordAddress">Current Password:</label>
+                    <input type="password" id="currentPasswordAddress" name="currentPasswordAddress" required>
+                    <label for="street">Street:</label>
+                    <input type="text" id="street" name="street" required>
+                    <label for="building_number">Building Number:</label>
+                    <input type="text" id="building_number" name="building_number" required>
+                    <label for="city">City:</label>
+                    <input type="text" id="city" name="city" required>
+                    <label for="postcode">Postcode:</label>
+                    <input type="text" id="postcode" name="postcode" required>
+                    <label for="country">Country:</label>
+                    <input type="text" id="country" name="country" required>
+                    <button type="submit">Update Address</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="profile.js"></script>
     <script>
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('role');
             localStorage.removeItem('userId');
+        }
+
+        function openModal() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('settingsModal').style.display = 'none';
         }
     </script>
 </body>
